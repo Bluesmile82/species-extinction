@@ -30,7 +30,7 @@ function Mesh(props) {
       )}
     >
       {type === 'sphere' ? (
-        <sphereGeometry attach="geometry" args={[1, 1, 1]} />
+        <sphereBufferGeometry attach="geometry" args={[1, 10, 10]} />
       ) : (
         <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
       )}

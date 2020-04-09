@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import './styles/app.scss';
 import ThreeComponent from './components/three-component';
 import Tooltip from './components/tooltip/tooltip';
@@ -13,7 +13,10 @@ function App() {
   return (
     <>
       {/* <div id="top-ui"></div> */}
-      <Intro className={cx({ in: introVisible, out: !introVisible })} />
+      <Intro
+        onWheel={(e) => (e.deltaY > 0 && setIntroVisible(false)) }
+        className={cx({ in: introVisible, out: !introVisible })}
+      />
       <Outro className={cx({ in: outroVisible, out: !outroVisible })} />
       <ThreeComponent
         introVisible={introVisible}

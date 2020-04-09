@@ -2,8 +2,8 @@ import React from 'react'
 import cx from 'classnames';
 import githubImage from '../images/icon-github.png';
 
-const Outro = ({ className }) => (
-  <div className={cx('outro', className)}>
+const Outro = ({ className, onWheel }) => (
+  <div className={cx('outro', className)} onWheel={onWheel}>
     <div className="legend">
       <div>
         <div>
