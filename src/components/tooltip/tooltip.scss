@@ -1,0 +1,24 @@
+@import '../../styles/variables.scss';
+
+#tooltip-container {
+  z-index: 11;
+  position: absolute;
+}
+
+.tooltip {
+  margin: auto;
+  background-color: rgba($background-color, 0.7);
+  color: white;
+  width: fit-content;
+  height: fit-content;
+  font-size: $font-size-s;
+  padding: 10px;
+}
+
+.tooltip-item {
+  padding: $font-size-xs;
+
+  .tooltip-message, .tooltip-kingdom-name {
+    font-size: 9px;
+  }
+}
