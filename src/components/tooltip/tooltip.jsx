@@ -10,6 +10,9 @@ const Tooltip = ({ data }) => {
       <div className="kingdom-name">
         {data.kingdomName} - {data.speciesClassName}
       </div>
+      <div className="kingdom-year">
+        {data.year}
+      </div>
       {mobileOrTablet ? (
         ''
       ) : (
