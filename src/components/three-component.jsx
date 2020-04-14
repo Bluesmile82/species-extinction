@@ -1,12 +1,15 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Canvas, useThree, extend, useFrame } from 'react-three-fiber';
 import * as THREE from 'three';
+import cx from 'classnames';
 import extinctionJson from '../data/extinction.json';
 import Mesh from './mesh';
-import { FlyControls } from 'three/examples/jsm/controls/FlyControls';
-import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass'
 
-extend({ FlyControls, BokehPass})
+extend({ UnrealBloomPass, RenderPass, EffectComposer, BokehPass })
 
 const BACKGROUND_COLOR = new THREE.Color('#08151e');
 
@@ -19,6 +22,7 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
     PLANTAE: '#73956f'
   };
   const [displayedYear, setDisplayedYear] = useState(START_YEAR);
+  const [yearsVisible, setYearsVisible] = useState(false);
   const [selectedCamera, setCamera] = useState(null);
   const canvasRef = useRef();
 
@@ -40,6 +44,8 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
       }
       if (!outroVisible && nextyear >= END_YEAR - 10) {
         setOutroVisible(true);
+        setYearsVisible(false);
+
       }
       if (outroVisible && nextyear < END_YEAR - 10) {
         setOutroVisible(false);
@@ -51,11 +57,10 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
         (displayedYear !== roundedYear && roundedYear % 100 === 0) ||
         (roundedYear > 1890 && roundedYear % 10 === 0)
       ) {
-        setDisplayedYear(roundedYear);
+        // setDisplayedYear(roundedYear);
       }
-      selectedCamera.updateProjectionMatrix(
-        void (selectedCamera.position.z += displacement)
-      );
+
+      selectedCamera.position.z += displacement;
     }
   };
 
@@ -66,9 +71,10 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
     move(displacement);
   }
 
+
   const Controls = () => {
     const { camera } = useThree();
-    if (camera) {
+    if (!selectedCamera && camera) {
       setCamera(camera)
     }
     return null
@@ -79,18 +85,26 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
     const composer = useRef()
     const { scene, gl, size, camera } = useThree();
     useEffect(() => void composer.current.setSize(size.width, size.height), [size]);
-    useFrame(() => composer.current.render(), 1);
+    useFrame(() => {
+      // move(-10)
 
+      return composer?.current?.render()
+    }, 1);
     return (
       <effectComposer ref={composer} args={[gl]}>
         <renderPass attachArray="passes" scene={scene} camera={camera} />
+        <unrealBloomPass attachArray="passes" args={[new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85]} />
         <bokehPass
           attachArray="passes"
-          focus={20.0}
-          aperture={1.1 * 0.00001}
-          maxblur={0.0125}
-          width={window.innerWidth}
-          height={window.innerHeight}
+          args={[scene,camera,
+            {
+              focus: 20.0,
+              aperture: 1.1 * 0.00001,
+              maxblur: 0.0125,
+              width: window.innerWidth,
+              height: window.innerHeight
+            }
+          ]}
         />
       </effectComposer>
     )
@@ -119,6 +133,7 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
 
     return (
       <div className="three-component" ref={canvasRef}>
+        <div className={cx("top-ui", { in: yearsVisible })} >{displayedYear}</div>
         <Canvas
           onWheel={onWheel}
           onCreated={({ scene }) => {
@@ -149,7 +164,7 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
             />
           ))}
           <Controls />
-          {/* <Effects /> */}
+          <Effects />
         </Canvas>
       </div>
     );
