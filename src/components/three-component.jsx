@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useThree, extend, useFrame } from 'react-three-fiber';
 import * as THREE from 'three';
 import cx from 'classnames';
@@ -13,7 +13,7 @@ extend({ UnrealBloomPass, RenderPass, EffectComposer, BokehPass })
 
 const BACKGROUND_COLOR = new THREE.Color('#08151e');
 
-const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, outroVisible, setOutroVisible }) => {
+const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, outroVisible, setOutroVisible,setDisplayedYear }) => {
   const START_YEAR = 1450;
   const END_YEAR = 2015;
   const CAMERA_START_Z = 500;
@@ -21,62 +21,65 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
     ANIMALIA: '#552222',
     PLANTAE: '#73956f'
   };
-  const [displayedYear, setDisplayedYear] = useState(START_YEAR);
+  // const [displayedYear, setDisplayedYear] = useState(START_YEAR);
   const [yearsVisible, setYearsVisible] = useState(false);
-  const [selectedCamera, setCamera] = useState(null);
+  const [selectedCamera, setCamera] = useState({ position: { z: null }});
   const canvasRef = useRef();
 
 
-  const move = (displacement) => {
-    const year = parseInt((selectedCamera.position.z / -10) + START_YEAR , 10);
-    const nextyear = parseInt(
-      ((selectedCamera.position.z + displacement) / -10) + START_YEAR,
-      10
-    );
 
-    const isInBounds = nextyear > START_YEAR - 100 && nextyear < END_YEAR;
-    if (isInBounds) {
-      if (introVisible) {
-        setIntroVisible(false);
+  const getYear = (cameraZ) => parseInt((cameraZ / -10) + START_YEAR , 10);
+  const getNextyear = (cameraZ, displacement) => parseInt(
+    ((cameraZ + displacement) / -10) + START_YEAR,
+    10
+  );
+  const getRoundedYear = (year) => Math.round(year / 10) * 10;
+
+
+
+  const onWheel = useCallback((e, swipeDisplacement) => {
+    const move = (displacement) => {
+      const nextYear = getNextyear(selectedCamera.position.z, displacement);
+      const isInBounds = nextYear > START_YEAR - 100 && nextYear < END_YEAR;
+      if (isInBounds) {
+        // if (introVisible) {
+        //   setIntroVisible(false);
+        // }
+        // if (!introVisible && nextYear <= START_YEAR) {
+        //   setIntroVisible(true);
+        // }
+        // if (!outroVisible && nextYear >= END_YEAR - 10) {
+        //   setOutroVisible(true);
+        //   setYearsVisible(false);
+
+        // }
+        // if (outroVisible && nextYear < END_YEAR - 10) {
+        //   setOutroVisible(false);
+        // }
+        selectedCamera.updateProjectionMatrix(void (selectedCamera.position.z += displacement))
       }
-      if (!introVisible && nextyear <= START_YEAR) {
-        setIntroVisible(true);
-      }
-      if (!outroVisible && nextyear >= END_YEAR - 10) {
-        setOutroVisible(true);
-        setYearsVisible(false);
-
-      }
-      if (outroVisible && nextyear < END_YEAR - 10) {
-        setOutroVisible(false);
-      }
-
-      const roundedYear = Math.round(year / 10) * 10;
-
-      if (
-        (displayedYear !== roundedYear && roundedYear % 100 === 0) ||
-        (roundedYear > 1890 && roundedYear % 10 === 0)
-      ) {
-        // setDisplayedYear(roundedYear);
-      }
-
-      selectedCamera.position.z += displacement;
-    }
-  };
-
-  const onWheel = (e, swipeDisplacement) => {
+    };
     const displacement = swipeDisplacement
     ? -swipeDisplacement * 10
     : -e.deltaY;
     move(displacement);
-  }
-
+  }, [selectedCamera]);
 
   const Controls = () => {
     const { camera } = useThree();
-    if (!selectedCamera && camera) {
+    if (!selectedCamera.position.x && camera) {
       setCamera(camera)
     }
+    useFrame(() => {
+      const roundedYear = getRoundedYear(getYear(camera.position.z));
+      if (
+        (roundedYear % 100 === 0) ||
+        (roundedYear > 1890 && roundedYear % 10 === 0)
+      ) {
+        setDisplayedYear(roundedYear);
+      }
+    }, 1);
+
     return null
   }
 
@@ -85,11 +88,7 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
     const composer = useRef()
     const { scene, gl, size, camera } = useThree();
     useEffect(() => void composer.current.setSize(size.width, size.height), [size]);
-    useFrame(() => {
-      // move(-10)
-
-      return composer?.current?.render()
-    }, 1);
+    useFrame(() => composer?.current?.render(), 1);
     return (
       <effectComposer ref={composer} args={[gl]}>
         <renderPass attachArray="passes" scene={scene} camera={camera} />
@@ -133,7 +132,6 @@ const ThreeComponent = ({ setHovered, hovered, introVisible, setIntroVisible, ou
 
     return (
       <div className="three-component" ref={canvasRef}>
-        <div className={cx("top-ui", { in: yearsVisible })} >{displayedYear}</div>
         <Canvas
           onWheel={onWheel}
           onCreated={({ scene }) => {

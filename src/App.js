@@ -9,20 +9,30 @@ import cx from 'classnames';
 function App() {
   const [introVisible, setIntroVisible] = useState(true);
   const [outroVisible, setOutroVisible] = useState(false);
+  const [displayedYear, setDisplayedYear] = useState(false);
+
   const [hovered, setHovered] = useState(null);
   return (
     <>
-      {/* <div id="top-ui"></div> */}
-      <Intro
+      {/* <Intro
         onWheel={(e) => (e.deltaY > 0 && setIntroVisible(false)) }
         className={cx({ in: introVisible, out: !introVisible })}
-      />
+      /> */}
+      <div
+        className={cx(
+          'top-ui'
+          // { in: !!yearsVisible }
+        )}
+      >
+        {displayedYear}
+      </div>
       <Outro className={cx({ in: outroVisible, out: !outroVisible })} />
       <ThreeComponent
         introVisible={introVisible}
         outroVisible={outroVisible}
         setIntroVisible={setIntroVisible}
         setOutroVisible={setOutroVisible}
+        setDisplayedYear={setDisplayedYear}
         setHovered={setHovered}
         hovered={hovered}
       />
